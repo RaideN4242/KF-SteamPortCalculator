@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KF Server Port Calculator</title>
+    <style>
+        /* ===== Базовый сброс и шрифты ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Roboto+Condensed:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Roboto Condensed', 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0a0a0a;
+            background-image:
+                radial-gradient(ellipse at 10% 20%, rgba(139, 0, 0, 0.2) 0%, transparent 60%),
+                radial-gradient(ellipse at 90% 80%, rgba(200, 50, 0, 0.15) 0%, transparent 50%),
+                linear-gradient(180deg, #0a0a0a 0%, #1a0a0a 100%);
+            padding: 20px;
+        }
+
+        /* ===== Основной контейнер ===== */
+        .container {
+            max-width: 780px;
+            width: 100%;
+            background: rgba(20, 10, 10, 0.92);
+            backdrop-filter: blur(4px);
+            border: 2px solid #6b2a1a;
+            border-radius: 20px;
+            padding: 40px 35px;
+            box-shadow:
+                0 0 40px rgba(180, 40, 0, 0.15),
+                inset 0 0 60px rgba(80, 20, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Декоративная линия сверху */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #8b1a1a, #cc4422, #8b1a1a);
+            box-shadow: 0 0 20px rgba(200, 60, 0, 0.4);
+        }
+
+        /* ===== Заголовок ===== */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            font-size: 2.4rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #e8d5b0;
+            text-shadow: 0 0 30px rgba(180, 60, 20, 0.3);
+        }
+
+        .header h1 span {
+            color: #cc4422;
+            text-shadow: 0 0 40px rgba(200, 60, 0, 0.5);
+        }
+
+        .header .subtitle {
+            font-size: 1rem;
+            color: #9a7a6a;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        .header .subtitle::before,
+        .header .subtitle::after {
+            content: ' — ';
+            color: #6b3a2a;
+        }
+
+        /* ===== Поле ввода ===== */
+        .input-section {
+            background: rgba(40, 20, 15, 0.5);
+            border: 1px solid #3a2218;
+            border-radius: 14px;
+            padding: 25px 20px;
+            margin-bottom: 25px;
+        }
+
+        .input-section label {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #d4c0a8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .input-row input {
+            flex: 1;
+            min-width: 180px;
+            padding: 14px 20px;
+            font-size: 1.2rem;
+            font-family: 'Roboto Condensed', sans-serif;
+            background: #1a0e0a;
+            border: 2px solid #3a2218;
+            border-radius: 10px;
+            color: #e8d5b0;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-row input::placeholder {
+            color: #5a4038;
+            font-size: 1rem;
+        }
+
+        .input-row input:focus {
+            border-color: #cc4422;
+            box-shadow: 0 0 25px rgba(200, 60, 0, 0.2);
+            background: #1f100a;
+        }
+
+        .input-row input.error {
+            border-color: #cc2222;
+            box-shadow: 0 0 25px rgba(200, 30, 0, 0.3);
+        }
+
+        .input-row button {
+            padding: 14px 40px;
+            font-family: 'Oswald', sans-serif;
+            font-weight: 600;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(180deg, #8b2a1a, #5a1a0a);
+            border: none;
+            border-radius: 10px;
+            color: #e8d5b0;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 0 #3a1008;
+            flex-shrink: 0;
+        }
+
+        .input-row button:hover {
+            background: linear-gradient(180deg, #a03a22, #6a2010);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #3a1008;
+        }
+
+        .input-row button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #3a1008;
+        }
+
+        /* ===== Ошибка ===== */
+        .error-message {
+            color: #dd5544;
+            font-size: 0.95rem;
+            margin-top: 10px;
+            min-height: 24px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== Результаты ===== */
+        .results {
+            display: none;
+            animation: fadeSlideIn 0.5s ease;
+        }
+
+        .results.visible {
+            display: block;
+        }
+
+        @keyframes fadeSlideIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-title {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 600;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #b89a7a;
+            text-align: center;
+            margin-bottom: 18px;
+            border-bottom: 1px solid #2a1810;
+            padding-bottom: 12px;
+        }
+
+        .results-title span {
+            color: #cc4422;
+        }
+
+        /* ===== Таблица портов ===== */
+        .port-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .port-table thead {
+            background: rgba(60, 25, 15, 0.6);
+        }
+
+        .port-table th {
+            padding: 12px 15px;
+            text-align: left;
+            font-family: 'Oswald', sans-serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #b89a7a;
+            font-size: 0.75rem;
+            border-bottom: 2px solid #3a2218;
+        }
+
+        .port-table td {
+            padding: 13px 15px;
+            border-bottom: 1px solid #1a100c;
+            color: #d4c0a8;
+        }
+
+        .port-table tbody tr {
+            transition: background 0.15s ease;
+        }
+
+        .port-table tbody tr:hover {
+            background: rgba(60, 30, 20, 0.3);
+        }
+
+        .port-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .port-number {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: #f0dcc0;
+            text-shadow: 0 0 20px rgba(200, 80, 30, 0.15);
+        }
+
+        .port-number.highlight {
+            color: #e8a060;
+            text-shadow: 0 0 30px rgba(200, 100, 40, 0.2);
+        }
+
+        .protocol-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .protocol-badge.udp {
+            background: rgba(30, 80, 160, 0.25);
+            color: #6a9ad4;
+            border: 1px solid rgba(60, 130, 220, 0.2);
+        }
+
+        .protocol-badge.tcp {
+            background: rgba(160, 100, 30, 0.25);
+            color: #d4a86a;
+            border: 1px solid rgba(200, 140, 60, 0.2);
+        }
+
+        .protocol-badge.both {
+            background: rgba(120, 60, 160, 0.25);
+            color: #b08ad4;
+            border: 1px solid rgba(160, 100, 200, 0.2);
+        }
+
+        .port-note {
+            color: #8a7a6a;
+            font-size: 0.85rem;
+        }
+
+        /* ===== Дополнительная информация ===== */
+        .extra-info {
+            margin-top: 25px;
+            background: rgba(30, 16, 10, 0.4);
+            border: 1px solid #2a1810;
+            border-radius: 12px;
+            padding: 18px 20px;
+        }
+
+        .extra-info .ini-line {
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: #b89a7a;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 14px;
+            border-radius: 6px;
+            border-left: 3px solid #cc4422;
+            word-break: break-all;
+        }
+
+        .extra-info .ini-line strong {
+            color: #e8d5b0;
+        }
+
+        .extra-info .formula-line {
+            color: #7a6a5a;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .extra-info .formula-line code {
+            color: #b08a6a;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        /* ===== Предупреждения ===== */
+        .warnings {
+            margin-top: 15px;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .warnings.visible {
+            display: block;
+            animation: fadeSlideIn 0.4s ease;
+        }
+
+        .warnings.warning {
+            background: rgba(180, 100, 0, 0.15);
+            border: 1px solid rgba(180, 100, 0, 0.3);
+            color: #d4a86a;
+        }
+
+        .warnings.danger {
+            background: rgba(180, 30, 0, 0.15);
+            border: 1px solid rgba(180, 30, 0, 0.3);
+            color: #dd6655;
+        }
+
+        /* ===== Footer ===== */
+        .footer {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #4a3a32;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-top: 1px solid #1a100c;
+            padding-top: 18px;
+        }
+
+        .footer a {
+            color: #6a5a4a;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer a:hover {
+            color: #b89a7a;
+        }
+
+        /* ===== Адаптивность ===== */
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px 18px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .input-row {
+                flex-direction: column;
+            }
+
+            .input-row button {
+                width: 100%;
+                padding: 16px;
+            }
+
+            .port-table th,
+            .port-table td {
+                padding: 10px 10px;
+                font-size: 0.85rem;
+            }
+
+            .port-table {
+                font-size: 0.8rem;
+            }
+
+            .port-number {
+                font-size: 1rem;
+            }
+
+            .extra-info .ini-line {
+                font-size: 0.8rem;
+                padding: 6px 10px;
+            }
+
+            .header .subtitle {
+                font-size: 0.7rem;
+                letter-spacing: 2px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .port-table th,
+            .port-table td {
+                padding: 7px 6px;
+                font-size: 0.7rem;
+            }
+
+            .port-number {
+                font-size: 0.85rem;
+            }
+
+            .protocol-badge {
+                font-size: 0.6rem;
+                padding: 1px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- ===== ЗАГОЛОВОК ===== -->
+        <div class="header">
+            <h1>KF <span>Port</span> Calculator</h1>
+            <div class="subtitle">Killing Floor Server — Port Mapper</div>
+        </div>
+
+        <!-- ===== ВВОД ===== -->
+        <div class="input-section">
+            <label for="portInput">🔧 Основной игровой порт</label>
+            <div class="input-row">
+                <input type="text" id="portInput" placeholder="Введите порт (например, 8008)" value="8008">
+                <button id="calcBtn">Рассчитать</button>
+            </div>
+            <div class="error-message" id="errorMsg"></div>
+        </div>
+
+        <!-- ===== РЕЗУЛЬТАТЫ ===== -->
+        <div class="results" id="resultsContainer">
+
+            <div class="results-title">📋 Результаты для порта <span id="resultPortDisplay">8008</span></div>
+
+            <table class="port-table">
+                <thead>
+                    <tr>
+                        <th>Назначение</th>
+                        <th>Порт</th>
+                        <th>Протокол</th>
+                        <th>Примечание</th>
+                    </tr>
+                </thead>
+                <tbody id="portTableBody">
+                    <!-- Заполняется JS -->
+                </tbody>
+            </table>
+
+            <!-- Дополнительная информация -->
+            <div class="extra-info">
+                <div class="ini-line">
+                    <strong>✏️ KillingFloor.ini</strong> → [IpDrv.UdpGamespyQuery] <br>
+                    OldQueryPortNumber=<span id="iniOldQuery">7717</span>
+                </div>
+                <div class="formula-line" id="formulaLine">
+                    <!-- Заполняется JS -->
+                </div>
+            </div>
+
+            <!-- Предупреждения -->
+            <div class="warnings" id="warningsContainer"></div>
+        </div>
+
+        <!-- ===== FOOTER ===== -->
+        <div class="footer">
+            <a href="#" onclick="event.preventDefault()">KF-Server</a> &bull; Port Calculator v1.0
+        </div>
+
+    </div>
+
+    <script>
+        // ================================================================
+        //  KF PORT CALCULATOR — ЛОГИКА
+        // ================================================================
+
+        // Константы (дефолтные порты из документации)
+        const DEFAULT_GAME_PORT = 7707;
+        const DEFAULT_MASTER_PORT = 28852;
+        const DEFAULT_STEAM_PORT = 20560;
+        const DEFAULT_OLD_QUERY_PORT = 7717;
+        const WEB_ADMIN_PORT = 8075;
+
+        // DOM-элементы
+        const portInput = document.getElementById('portInput');
+        const calcBtn = document.getElementById('calcBtn');
+        const errorMsg = document.getElementById('errorMsg');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resultPortDisplay = document.getElementById('resultPortDisplay');
+        const portTableBody = document.getElementById('portTableBody');
+        const iniOldQuery = document.getElementById('iniOldQuery');
+        const formulaLine = document.getElementById('formulaLine');
+        const warningsContainer = document.getElementById('warningsContainer');
+
+        // ===== Функция расчета =====
+        function calculatePorts(userPort) {
+            // Проверка валидности
+            if (!Number.isInteger(userPort) || userPort < 1 || userPort > 65535) {
+                return { error: 'Порт должен быть целым числом от 1 до 65535.' };
+            }
+
+            // Формулы из документации
+            const masterPort = (DEFAULT_MASTER_PORT - DEFAULT_GAME_PORT) + userPort;
+            const steamPort = (DEFAULT_STEAM_PORT - DEFAULT_GAME_PORT) + userPort;
+            const queryPort = userPort + 1;           // +1
+            const steamQueryPort = userPort + 10;     // +10
+            const oldQueryPort = DEFAULT_OLD_QUERY_PORT + (userPort - DEFAULT_GAME_PORT);
+
+            // Формируем массив портов для таблицы
+            const ports = [
+                { name: 'Игровой порт (Game Port)', port: userPort, protocol: 'UDP', note: 'Для подключения в игре' },
+                { name: 'Query Port (в игре)', port: queryPort, protocol: 'UDP', note: '+1 к основному' },
+                { name: 'Steam Query Port', port: steamQueryPort, protocol: 'UDP', note: '+10 к основному' },
+                { name: 'Мастер-сервер (Master)', port: masterPort, protocol: 'TCP+UDP', note: 'Доступ к мастер-серверу' },
+                { name: 'Steam Port', port: steamPort, protocol: 'UDP', note: 'Работа с Steam бэкендом' },
+                { name: 'WebAdmin', port: WEB_ADMIN_PORT, protocol: 'TCP', note: 'Стандартный (не меняется)' },
+            ];
+
+            // Готовим предупреждения
+            const warnings = [];
+            if (userPort === WEB_ADMIN_PORT) {
+                warnings.push({
+                    type: 'danger',
+                    text: `⚠️ Игровой порт совпадает с портом WebAdmin (${WEB_ADMIN_PORT})! Рекомендуется изменить WebAdmin.`
+                });
+            }
+            if (userPort < 1024) {
+                warnings.push({
+                    type: 'warning',
+                    text: `ℹ️ Порт ${userPort} относится к привилегированным (1-1023). Для его использования могут потребоваться права администратора.`
+                });
+            }
+
+            return {
+                ports,
+                oldQueryPort,
+                masterPort,
+                steamPort,
+                steamQueryPort,
+                queryPort,
+                warnings,
+                userPort
+            };
+        }
+
+        // ===== Функция рендеринга =====
+        function renderResults(data) {
+            if (data.error) {
+                errorMsg.textContent = data.error;
+                portInput.classList.add('error');
+                resultsContainer.classList.remove('visible');
+                warningsContainer.classList.remove('visible');
+                return;
+            }
+
+            // Скрываем ошибку
+            errorMsg.textContent = '';
+            portInput.classList.remove('error');
+
+            // Показываем результаты
+            resultPortDisplay.textContent = data.userPort;
+            resultsContainer.classList.add('visible');
+
+            // --- Таблица ---
+            let tableHTML = '';
+            data.ports.forEach(p => {
+                let protocolClass = 'udp';
+                if (p.protocol === 'TCP') protocolClass = 'tcp';
+                else if (p.protocol === 'TCP+UDP') protocolClass = 'both';
+
+                const isGamePort = (p.name === 'Игровой порт (Game Port)');
+                const portClass = isGamePort ? 'port-number highlight' : 'port-number';
+
+                tableHTML += `
+                    <tr>
+                        <td>${p.name}</td>
+                        <td class="${portClass}">${p.port}</td>
+                        <td><span class="protocol-badge ${protocolClass}">${p.protocol}</span></td>
+                        <td class="port-note">${p.note}</td>
+                    </tr>
+                `;
+            });
+            portTableBody.innerHTML = tableHTML;
+
+            // --- INI-строка ---
+            iniOldQuery.textContent = data.oldQueryPort;
+
+            // --- Формулы ---
+            formulaLine.innerHTML = `
+                📐 <code>Мастер: (${DEFAULT_MASTER_PORT} − ${DEFAULT_GAME_PORT}) + ${data.userPort} = ${data.masterPort}</code> &nbsp;|&nbsp;
+                <code>Steam: (${DEFAULT_STEAM_PORT} − ${DEFAULT_GAME_PORT}) + ${data.userPort} = ${data.steamPort}</code> &nbsp;|&nbsp;
+                <code>Query: ${data.userPort} + 1 = ${data.queryPort}</code> &nbsp;|&nbsp;
+                <code>SteamQ: ${data.userPort} + 10 = ${data.steamQueryPort}</code>
+            `;
+
+            // --- Предупреждения ---
+            if (data.warnings.length > 0) {
+                warningsContainer.className = 'warnings visible';
+                warningsContainer.innerHTML = data.warnings.map(w =>
+                    `<div style="margin: 4px 0;">${w.text}</div>`
+                ).join('');
+                // Устанавливаем класс для стиля (берём первый, можно доработать)
+                if (data.warnings.some(w => w.type === 'danger')) {
+                    warningsContainer.classList.add('danger');
+                } else {
+                    warningsContainer.classList.add('warning');
+                }
+            } else {
+                warningsContainer.className = 'warnings';
+                warningsContainer.innerHTML = '';
+            }
+        }
+
+        // ===== Обработчик расчета =====
+        function handleCalculate() {
+            const rawValue = portInput.value.trim();
+            if (rawValue === '') {
+                errorMsg.textContent = 'Пожалуйста, введите номер порта.';
+                portInput.classList.add('error');
+                resultsContainer.classList.remove('visible');
+                warningsContainer.classList.remove('visible');
+                return;
+            }
+
+            const userPort = Number(rawValue);
+            if (isNaN(userPort) || !Number.isInteger(userPort)) {
+                errorMsg.textContent = 'Ошибка: введите целое число.';
+                portInput.classList.add('error');
+                resultsContainer.classList.remove('visible');
+                warningsContainer.classList.remove('visible');
+                return;
+            }
+
+            const result = calculatePorts(userPort);
+            renderResults(result);
+        }
+
+        // ===== События =====
+        calcBtn.addEventListener('click', handleCalculate);
+
+        portInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleCalculate();
+            }
+        });
+
+        // ===== Автозапуск при загрузке =====
+        window.addEventListener('DOMContentLoaded', () => {
+            // Автоматически рассчитываем для порта 8008 (стоит по умолчанию)
+            setTimeout(handleCalculate, 100);
+        });
+    </script>
+
+</body>
+</html>
